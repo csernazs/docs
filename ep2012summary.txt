@@ -1,0 +1,239 @@
+
+
+---++ EuroPython notes
+EuroPython was held in Florence from 1st to 6th of July. It was organized by
+a non-profit association called PyItalia and this time Guido accepted the
+invitation so he kept the keynote speech.
+
+Similar to the last year, there were lightning talks, coding competitions
+and lots of new information and fun. This year the web technologies and
+nosql were the dominant (last year, PostgreSQL was the dominant in terms of
+talks). Also, the PyPy core team gave huge number of talks (2-3 talks per
+day).
+
+750+ people attended the conference this year.
+
+---+++ Guido's Keynote + Q&A
+
+Guido kicked off the conference with his keynote speech, which was roughly
+the same speech as he kept at PyCon US.  He addressed the most frequently
+asked questions (mostly asked by trolls) about speed, dynamic tying, python
+3, and so on.
+Python 3 is getting more and more popularity while they are putting new
+features to it. He told that python 2 will definitely exist forever, but
+there will be no bugfixes for it after they stop the maintenance :).
+He showed that libraries are ported to python 3 at good speed, however PSF
+has grants for developers who need money for the porting (of course, the
+library should be very popular and must have large number of dependents).
+
+He told that python is just fast enough, and dynamic typing is not evil,
+because in a static languge a hashmap or dictionary is implemented
+and looked up dynamically, and static typing doesn't mean that your program
+is running and bug-free.
+
+According PyPy he told that he is ready to "resign" if the PyPy folks can
+solve the current issues (currently Python extensions implemented in C are
+not compatible with PyPy). He told that he was always pessimistic about
+implementing a JIT for python and he noted that currently python is used in
+enviroments where python's performance is sufficient, and code readibility,
+code maintance and productivity are much more important factors when
+choosing a language in most cases.
+
+
+There was a Q&A afternoon where the questions were collected previously on
+google moderator from people. There were amuginly lots of unrelated
+questions, nearly all questions addressed in the keynote talk were asked.
+There was a question about why python nis not available for Chrome and
+Android. He deferred the question saying that it's a political question.
+
+
+---+++ PyPy
+PyPy people also had a keynote speech where they gave a status update about
+the projects.
+They received 100k USD funding from donations, and funds from companies like
+Google.
+
+There's a working GIL-less STM (Software Transactional Memory) branch in
+Armin's branch which is currently very slow but they are trying to optimize
+the scheduler. They showed the scheduling patterns. STM is a technique where
+the don't use locks at all but they create transactions for critical
+sections of the codes. A given transaction can run at one time but
+different transactions can run in parallel. If there are parallel runnings
+of the same critical block, only one of them will survive and the rest of
+them will be "rolled back", similar to transactions in databases.
+
+They are also working on porting numpy to pypy which is a slow process and I
+think they are at the very beginning. PyPy has a different python C API so
+the binary extensions such as numpy are not compatible with it.
+
+They also developed a CFFI library which is available in the firm as well.
+They created it as an alternative to the ctypes library where creating
+function references and C types is very difficult. In CFFI it parses the
+actual C code and creates the appropriate proxy objects in python so the
+developer can call C functions seamless (they claim it :)).
+Despite it's developed by them, it's available only for Python 2 (any maybe
+3) at them moment, so no PyPy support. They consider it a PoC and they are
+looking forward to port it to PyPy.
+
+The Cython porting to PyPy project has been stopped I think as it was not
+mentioned at all (last year, they stated that it will be the alternative for
+porting extensions to PyPy).
+
+
+---+++ Method restrictions
+It was a talk about implementing decorators to introduce restrictions to the
+python.  @pure is a decorator which guards a function so it cannot change
+global variable and cannot import any module to its scope.  It's first done
+at runtime but it was hacky and it didn't worked in some cases.  So he
+re-implemented it by disassembling the function (by the dis module) and
+examining its content which is much better as he can raise exception when
+the function is defined and it worked more stable.
+
+
+abstract, final and override decorators are guards for methods. Abstract
+requires the given method inherited, so it cannot be called
+directly. Final is the opposite. It disallows inheritance. Override requires
+that the given method should inherit from its parent class.
+
+He showed and explained the implementation which was quite interesting to
+see how it's possible to do compile-time (definition time) checkings in
+python by examining the functions and code objects.
+
+The presentation was done by a hungarian guy who works for google. The code
+is released under the name "pobject" with GPL license.
+
+---+++ Music theory, genetic algorithms
+It was a funny and entertaining presentation about implementing genetic
+algoritms to mimic the music of Bach and Mozart. There were numerous music
+samples, and he asked who created the given music (python or Bach/Mozart),
+and in one case he defeated us (so the audience thought that it was done by
+a human but in fact it was created by the algorithm).
+
+
+---+++ Clone detection in python
+The presentation showed different methods to detect clones in source codes.
+There are tools which examine the text only, and there are others which
+examine AST and other more complex structures.
+There's a code digger tool which is free and AST based and he compared
+different tools which can detect clones in python source files. Finally he
+got to the conclusion that there are many false reports in all tools so
+these cannot be compared by looking at the numbers.
+
+---+++ Concurrent.future
+Python 3 has a new feature which is the concurrent package. This package
+provides a unified interface for creating thread and process pools.
+
+Future objects have been added which are much more superior compared to the
+deferred objects in Twisted and I think it's a bit of shame that we had to
+wait for this long time. The main difference is that future object carry the
+value of the event, and not the actual value but the future object is given
+to the callback so it can not only get the value but can do futher
+operations on the object, eg adding more callbacks.
+
+Based on the talk I had the feeling that it's a well designed API. Actually
+there's a PEP for it (http://www.python.org/dev/peps/pep-3148/) and I would
+say that this feature worth upgrading to python 3... But it's backported to
+python 2 as an external module python 2 developers can also use it.
+
+This talk was done by Andrew Dalke from Dalke Scientific who provide various
+tools for scientists in the bioinformatics field. Last year he also had an
+excellent talk about iterators and generators.
+
+
+---+++ hotpy (2)
+HotPy is a tracing JIT compiler for python. It was a PhD thesis last year
+but this year it was rewritten from zero by using the source tree of python
+3.3. It aims to be binary compatible with the original CPython
+implementation (so extensions must work) and they expect double speed
+compared to CPython.
+
+In the current state of the project it executes the code with the same speed
+as CPython so there's no advantage, so the presenter, who is the main
+developer, showed the implementation details.
+
+The main problem with python's bytecodes are that they are not atomic,
+for example an addition is a single bytecode in python but results calling
+__add__ and __radd__ methods of the operands.
+So he created atomic bytecodes for python, and he is resolving the current
+bytecodes so it results huge amount of bytecode - which the JIT compiler can
+reduce by various optimalizations.
+
+---+++ realtime x-rays
+By calling sys._current_frames() it returns a snapshot of all the threads
+and their stack.  We can examine the program's running at runtime by running
+a thread in the background which calls this functiono periodically.
+By this technique, statistical profiling can be done by saving the snapshot
+of the frames and provides information about which lines were executed more
+times. As the stack frame is recoded it's also possible to know the local
+variables which can be very useful in figuring out why the program was slow.
+
+---+++ How did you do that?
+This presentation was given by an economist who is working at a large financial
+institution. They daily task is to create internal reports from the
+database, but as the database has no indexes and it's badly configured, only
+one client's data can be queried (instead of querying all the required clients
+by one query). So they copy&pasteing the result to excel spreadsheets.
+Daily.
+It's a very boring and brainmelting stuff so he decided to do something. He
+installed python to his computer but as he is not an administrator, he
+installed pyrun which is a portable python distribution (so it can be
+installed to any directory), plus the additional packages required. They are
+using DB2 so he installed ibm_db, then the package for manipulating excel
+files, and so on.
+
+Then he created a python code which done the same job as they did but it
+completed in two hours without human interaction instead of working for a
+day to get the results, so the effectiveness was about 400%. Then he
+packaged this python script to an exe by py2exe and gave it to his workmates
+to the effectiveness multiplied in his group.
+
+It was amazing to see that how much work is done by humans which can be done
+by scripts who can do their work precisely and automatically. They now have
+good looking, unified excel tables, and reporting tools implemented in
+python.
+
+He told that this projects must have been done under the cover because he
+wouldn't have got any permission for this.
+
+So, please DO implement the scripts for repetative works!
+We have dozens of them, starting with editing twiki pages to installing
+packages. Doing a weekly report which takes 5 minutes per week is 52*5 =
+more than 4 hours. Writing a script which does it automatically or
+semi-automatically needs significantly less time.
+
+---+++ Number crunching
+In this talk they presented how to use numpy "just for fun". They showed the
+main principles of numy, the C and F (Fortran) ndarrays and the operations,
+starting with a simple multiplication by a constant to a map function which
+is executed at C level.
+They emphasized the effectiveness of numpy by noting that it can utilize MKL
+(which is what we are doing in the firm), and requiring negilible overhead
+of the operations.
+They showed advanced indexing (slicing) where we can get different areas
+from an ndarray by a single operation.
+
+
+---+++ Advanced python installation
+It was a talk about a python installation which seemed to be very similar to
+ours - but in fact it is using local installations in contrast to network
+filesystems we are using.
+They are using relative RPATHS ($ORIGIN/dir/dir) and they are creating
+wrappers for python implemented in C (so it's a native binary on windows and
+unix), which obtains the python script from it's name (example.exe runs
+example.py). I think it's a nice feature what we should try to adapt.
+
+In their sitecustomize.py they are doing dark magic by calling os.putenv to
+adjust the environment variable so it has no affect to os.environ (which
+can cause problems in my opinion as the developer will have no access to these
+variables in os.environ).
+
+They are using MinGW on Fedora 16 and he told that it's working fine, so
+they have GTK , libxml and the other libraries built on Linux for Windows.
+
+
+For DLL search paths, they are using ctypes.windll.kernel32.SetDllDirectoryW
+call as it doesn't affect the PATH environment variable and it can nicely
+inject the additional paths required for the DLLs. I think it's another good
+feature we should look at it.
+
+
